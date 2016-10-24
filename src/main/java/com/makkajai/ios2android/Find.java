@@ -23,15 +23,15 @@ public class Find {
     public static class Finder
             extends SimpleFileVisitor<Path> {
 
-        private final PathMatcher matcher;
+        private PathMatcher matcher;
         private final String pathPrefix;
         private final String replacePrefixWith;
         private int numMatches = 0;
+        private final StringBuffer buffer = new StringBuffer();
 
-        Finder(String fileNameToProcess, String pathPrefix, String replacePrefixWith) {
+        Finder(String pathPrefix, String replacePrefixWith) {
             this.pathPrefix = pathPrefix;
             this.replacePrefixWith = replacePrefixWith;
-            matcher = FileSystems.getDefault().getPathMatcher("glob:" + fileNameToProcess);
         }
 
         // Compares the glob pattern against
@@ -41,14 +41,16 @@ public class Find {
             if (name != null && matcher.matches(name)) {
                 numMatches++;
                 String filePath = file.toString();
-                System.out.print(filePath.replaceAll(pathPrefix, replacePrefixWith) + " ");
+                buffer
+                        .append(filePath.replaceAll(pathPrefix, replacePrefixWith))
+                        .append(" ");
             }
         }
 
         // Prints the total number of
         // matches to standard out.
         void done() {
-            System.out.println();
+            System.out.println(buffer.toString() + " \\ ");
         }
 
         // Invoke the pattern matching
@@ -74,6 +76,11 @@ public class Find {
                                                IOException exc) {
             System.err.println(exc);
             return CONTINUE;
+        }
+
+        public void walkFileTree(String fileNameToProcess) throws IOException {
+            matcher = FileSystems.getDefault().getPathMatcher("glob:" + fileNameToProcess);
+            Files.walkFileTree(Paths.get(pathPrefix), this);
         }
     }
 }

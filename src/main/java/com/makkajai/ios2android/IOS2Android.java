@@ -13,9 +13,16 @@ import java.util.regex.Pattern;
 public class IOS2Android {
 
     public static void main(String[] args) throws IOException {
-        String inputFile = "/Users/batman/playground/projarea/monster-math-cross-platform/monster-math-2/proj.ios_mac/monster-math-2.xcodeproj/project.pbxproj";
-        String androidMKFile = "/Users/batman/playground/projarea/monster-math-cross-platform/monster-math-2/proj.android-studio/app/jni/Android.mk";
-        String pathToStartLookingForFiles = "/Users/batman/playground/projarea/monster-math-cross-platform/monster-math-2/Classes";
+
+        if(args.length != 2) {
+            System.out.println("Usage: java com.makkajai.ios2android.IOS2Android <root directory of cocos2dx project> <Project Name>");
+            System.out.println("Example: java com.makkajai.ios2android.IOS2Android \"/Users/batman/demo-project\" \"monster-math-2\"");
+            return;
+        }
+
+        String inputFile = args[0] + "/proj.ios_mac/" + args[1] + ".xcodeproj/project.pbxproj";
+        String androidMKFile = args[0] + "/proj.android-studio/app/jni/Android.mk";
+        String pathToStartLookingForFiles = args[0] + "/Classes";
         String valueToReplacePathWith = "../../../Classes";
 
         Scanner iOSProjectFileScanner = new Scanner(new File(inputFile));
@@ -26,6 +33,7 @@ public class IOS2Android {
 
         Set<String> alreadyProcessedFiles = new HashSet<String>();
 
+        Find.Finder finder = new Find.Finder(pathToStartLookingForFiles, valueToReplacePathWith);
         while (iOSProjectFileScanner.hasNextLine()) {
             String line = iOSProjectFileScanner.nextLine();
             Matcher m = r.matcher(line);
@@ -37,11 +45,9 @@ public class IOS2Android {
                 continue;
             alreadyProcessedFiles.add(fileNameToProcess);
             if(!androidMKFileContents.contains(fileNameToProcess)) {
-                Find.Finder finder = new Find.Finder(fileNameToProcess, pathToStartLookingForFiles, valueToReplacePathWith);
-                Files.walkFileTree(Paths.get(pathToStartLookingForFiles), finder);
-                finder.done();
+                finder.walkFileTree(fileNameToProcess);
             }
-
         }
+        finder.done();
     }
 }
